@@ -1,0 +1,160 @@
+{% extends "auctions/layout.html" %}
+{% load humanize %}
+{% load static %}
+
+<!-- Clicking on a listing should take users to a page specific to that listing. On that page, users should be able to view all 
+    details about the listing, including the current price for the listing.
+If the user is signed in, the user should be able to add the item to their “Watchlist.” If the item is already on the watchlist, 
+the user should be able to remove it.
+If the user is signed in, the user should be able to bid on the item. The bid must be at least as large as the starting bid, and 
+must be greater than any other bids that have been placed (if any). If the bid doesn’t meet those criteria, the user should be 
+presented with an error.
+If the user is signed in and is the one who created the listing, the user should have the ability to “close” the auction from 
+this page, which makes the highest bidder the winner of the auction and makes the listing no longer active.
+If a user is signed in on a closed listing page, and the user has won that auction, the page should say so.
+Users who are signed in should be able to add comments to the listing page. The listing page should display all comments that 
+have been made on the listing. -->
+
+{% block body %}
+    <h2>Listing View
+        {% if watching == True %}
+            : you are watching this item
+        {% endif %}
+    </h2>
+
+    {% if active == True %}
+        <h4>This listing is active</h4>
+    {% else %}
+        <h4>This listing is closed</h4>
+            {% if current_user == winning_bidder %}
+                <h4 style="color: green;">You won this auction!</h4>
+            {% endif %}
+    {% endif %}
+    
+    {% if user.is_authenticated %}
+        {% if seller_login == True %}
+            <h5>This is your listing</h5>
+        {% endif %}
+    {% endif %}
+
+    
+    <div class="container-fluid">
+
+        <div class="row align-items-center" style="height: 300px">
+            <div class="col-md-auto" style="width: 320px; padding-left: 0; padding-right: 0;">
+                <img class="rounded mx-auto d-block" src="{{ listing.image_url }}" height=200px style="max-width: 100%; max-height: 100%; margin-left: 0;
+                        margin-right: auto; padding-top: 10px; padding-right: 10px; padding-bottom: 10px">
+                    </div>
+            
+            <div class="col" style="padding: 10px; ">
+                <div class = "row">
+                    <div class="col-md-auto"><div class="listingheading">Seller:</div></div>
+                    <div class="col">{{ listing.user }}</div></div>
+                <div class = "row">
+                    <div class="col-md-auto"><div class="listingheading">Listing title:</div></div>
+                    <div class="col">{{ listing.title }}</div></div>
+                <div class = "row">
+                    <div class="col-md-auto"><div class="listingheading">Description:</div></div>
+                    <div class="col">{{ listing.description }}</div></div>
+                <div class = "row">
+                    <div class="col-md-auto"><div class="listingheading">Starting bid:</div></div>
+                    <div class="col">£{{ listing.starting_bid | intword | intcomma }}</div></div>    
+                <div class = "row">
+                    <div class="col-md-auto"><div class="listingheading">Category:</div></div>
+                    <div class="col">{{ listing.category }}</div></div> 
+                <div class = "row">
+                    <div class="col-md-auto"><div class="listingheading">Posted:</div></div>
+                    <div class="col">{{ listing.creation_time | naturaltime}}</div></div>
+                {% if count_bid == 0 %}
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Bids:</div></div>
+                        <div class="col">No bids</div></div>
+                {% else %}
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Number of bids:</div></div>
+                        <div class="col">{{ count_bid }}</div></div>
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Max bid:</div></div>
+                        <div class="col">£{{ max_bid | intword | intcomma }}</div></div>
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Winning bidder:</div></div>
+                        <div class="col">{{ winning_bidder }}</div></div>    
+                {% endif %}           
+            </div>                 
+        </div> 
+        <div class="row align-items-center" style="margin-bottom: 20px;">
+            {% if watching == False %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="submit", value="Add to watchlist", name="watchlist", class="btn btn-outline-primary">
+                </form>
+            {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="submit", value="Remove from watchlist", name="watchlist", class="btn btn-outline-primary">
+                </form>
+            {% endif %}
+    </div>
+    {% if user.is_authenticated %}
+    {% if active == True and seller_login == False %}
+        
+        {% if message != "" %}
+        <div class="row", style="margin-bottom: 20px;">
+            <div style="color: firebrick">{{ message }}</div></div>
+        {% endif %}
+        <div class="row", style="margin-bottom: 20px;">
+        
+            <form action="{{ listing_id }}" method="post">
+                {% csrf_token %}
+                {{ new_bid_amount }}
+                <input type="submit", value="Submit bid", name="new_bid", class="btn btn-outline-primary", style="margin-left: 20px; vertical-align: top;">
+            </form>
+        </div>
+                
+        
+    {% endif %}
+    
+    {% if seller_login == True and active == True %}    
+        <div class="row" style="margin-bottom: 20px;">         
+                    
+            <form method="post">
+                {% csrf_token %}
+                <input type="submit", value="End listing", name="end_listing", class="btn btn-outline-primary">
+            </form>
+                
+        </div>        
+    {% endif %}
+        
+    <div class="row" style="margin-bottom: 20px;">     
+        
+        <form method="post">
+            {% csrf_token %}
+            {{ addComment }}
+            <input type="submit", value="Add comment", name="Comment", class="btn btn-outline-primary", style="margin-left: 20px; vertical-align: top;">
+        </form>
+
+    </div>
+        
+            
+    {% endif %} 
+          
+    <h4>Comments:</h4>
+
+    {% for comment in comments %}
+        <div class="row" style="margin-bottom: 20px;">
+            <div class="col-3">
+                {{ comment.comment }}
+            </div>
+            <div class="col-1">
+                {{ comment.user }}
+            </div>
+            <div class="col-8">
+                {{ comment.comment_time | naturaltime }}
+            </div>
+            
+        </div>    
+    {% endfor %}
+    <br>
+</div> 
+
+{% endblock %}

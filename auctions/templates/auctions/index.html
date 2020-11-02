@@ -1,0 +1,97 @@
+{% extends "auctions/layout.html" %}
+{% load humanize %}
+
+<!-- The default route of your web application should let users view all of the currently active auction listings. For each active 
+    listing, this page should display (at minimum) the title, description, current price, and photo (if one exists for the listing). -->
+
+{% block body %}
+    <h2>
+        {% if active_toggle == True %}
+        Active listings:
+        {% else %}
+        Closed listings:
+        {% endif %}
+        {% if watchlist == True %}
+        Watchlist:
+        {% endif %}
+    </h2>
+    <h3 style="color: steelblue; margin-bottom: 20px;">
+        {% if category == "All" %}
+        All categories
+        {% else %}
+        {{ category }}
+        {% endif %}
+
+    </h3>
+
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-auto text-center" style="width: 150px;">
+                {% if active_toggle == True %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="submit", class="btn btn-outline-primary" value="Closed listings", name="closed_on" style="margin-bottom: 10px">
+                </form>
+                {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="submit", class="btn btn-outline-primary" value="Active listings", name="closed_off"style="margin-bottom: 10px">
+                </form>
+                {% endif %}
+            </div>
+            <div class="col-md-auto text-center" style="width: 150px; align-content: center;">
+                {% if user.is_authenticated %}
+                {% if watchlist == False %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="submit" class="btn btn-outline-primary" value="Watchlist only", name="watchlist_on"style="margin-bottom: 10px">
+                </form>
+                {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="submit", class="btn btn-outline-primary" value="All listings", name="watchlist_off"style="margin-bottom: 10px">
+                </form>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <a class="nav-link" href="{% url 'index' %}">Reset view</a>
+
+    <div class="container-fluid">
+
+        {% for listing in listings %}
+            <div class="row align-items-center" style="height: 200px">
+                <div class="col-md-auto" style="width: 320px; padding-left: 0; padding-right: 0;">
+                    <img class="rounded mx-auto d-block" src="{{ listing.image_url }}" height=200px style="max-width: 100%; max-height: 100%; margin-left: 0;
+                        margin-right: auto; padding-top: 10px; padding-right: 10px; padding-bottom: 10px">
+                </div>
+                <div class="col" style="padding: 10px; ">
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Seller:</div></div>
+                        <div class="col">{{ listing.user }}</div></div>
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Listing title:</div></div>
+                        <div class="col">{{ listing.title }}</div></div>
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Description:</div></div>
+                        <div class="col">{{ listing.description }}</div></div>
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Starting bid:</div></div>
+                        <div class="col">£{{ listing.starting_bid | intword | intcomma }}</div></div>    
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Category:</div></div>
+                        <div class="col">{{ listing.category }}</div></div> 
+                    <div class = "row">
+                        <div class="col-md-auto"><div class="listingheading">Posted:</div></div>
+                        <div class="col">{{ listing.creation_time | naturaltime}}</div></div>
+
+                    <a href="listing/{{ listing.id }}">View listing</a>
+                </div>
+                
+            </div>    
+        {% endfor %}
+        </div>
+
+{% endblock %}
